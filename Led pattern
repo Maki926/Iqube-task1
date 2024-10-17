@@ -1,0 +1,110 @@
+#define F_CPU 16000000UL  
+#include <avr/io.h>        
+#include <util/delay.h> 
+
+void basic_pattern(uint8_t led) 
+{
+    PORTD = led;
+    _delay_ms(500);
+}
+
+void pat1()
+{
+    basic_pattern(0xAA);
+    basic_pattern(0x55);
+}
+
+void pat2()
+{
+    for(int i=0; i<8; i++)
+    {
+        basic_pattern(1<<i);
+    }
+}
+
+void pat3(){
+    for (int i=0; i<4; i++)
+    {
+        basic_pattern(1<<i | 1<<7-i);       
+    }
+}
+
+void pat4(){
+    for(int i=0; i<8; i++)
+    {
+        basic_pattern(1<<i | 1<<7-i);
+    }
+}
+
+void pat5(){
+    for(int i=0; i<8; i++)
+    {
+        basic_pattern(1<<i);
+    }
+  
+    for(int i=7; i>=0; i--)
+    {
+        basic_pattern(1<<i);
+    }
+}
+
+void pat6(){
+    uint8_t pt = 0x00; 
+    for (int i = 0; i < 8; i++) 
+    {
+        pt |= (1 << i);  
+        basic_pattern(pt); 
+    }
+    for (int i = 0; i < 8; i++)
+    {
+        pt &= ~(1 << i);  
+        basic_pattern(pt);  
+    }
+}
+
+void pat7(){
+    uint8_t pt = 0x00; 
+    for (int i=0; i<8; i++) 
+    {
+        pt |= (1 << i);  
+        basic_pattern(pt); 
+    }
+    for (int i=7; i>=0; i--)
+    {
+        pt &= ~(1 << i);  
+        basic_pattern(pt);  
+    }
+}
+
+int main()
+{
+    DDRD = 0xFF; // Set PORTD as output
+    DDRB &= ~(1 << PB2); // Set PB2 (pin 10) as input
+    PORTB |= (1 << PB2); // Enable pull-up resistor on PB2
+
+    uint8_t pattern = 0; // Variable to keep track of the current pattern
+
+    while(1)
+    {
+        if (!(PINB & (1 << PB2))) // Check if button is pressed
+        {
+            _delay_ms(50); // Debounce delay
+            if (!(PINB & (1 << PB2))) // Check again to confirm button press
+            {
+                pattern = (pattern + 1) % 7; // Increment pattern and wrap around after 7
+                while (!(PINB & (1 << PB2))); // Wait for button release
+            }
+        }
+
+        switch(pattern)
+        {
+            case 0: pat1(); break;
+            case 1: pat2(); break;
+            case 2: pat3(); break;
+            case 3: pat4(); break;
+            case 4: pat5(); break;
+            case 5: pat6(); break;
+            case 6: pat7(); break;
+        }
+    }
+}
